@@ -33,35 +33,46 @@ public class SSLSocketChannel
 	    createBuffers(session);
 	    // wrap
 	    clientOut.clear();
-	    sc.write(wrap(clientOut));
-	    while (res.getHandshakeStatus() != 
-		   SSLEngineResult.HandshakeStatus.FINISHED) {
-		if (res.getHandshakeStatus() == 
-		    SSLEngineResult.HandshakeStatus.NEED_UNWRAP) {
-		    // unwrap
-		    sTOc.clear();
-		    while (sc.read(sTOc) < 1)
-			Thread.sleep(20);
-		    sTOc.flip();
-		    unwrap(sTOc);
-		    if (res.getHandshakeStatus() != SSLEngineResult.HandshakeStatus.FINISHED) {
-			clientOut.clear();
-			sc.write(wrap(clientOut));
-		    }
-		} else if (res.getHandshakeStatus() == 
-			   SSLEngineResult.HandshakeStatus.NEED_WRAP) {
-		    // wrap
-		    clientOut.clear();
-		    sc.write(wrap(clientOut));
-		} else {Thread.sleep(1000);}
+	    
+	    // wait till it is connected, or for another exception to occur
+	    if(sc.isConnected()){
+		performSecureSetup();
 	    }
-	    clientIn.clear();
-	    clientIn.flip();
-	    SSL = 4;
 	} catch (Exception e) {
 	    e.printStackTrace(System.out);
 	    SSL = 0;
 	}
+    }
+
+    int getState(){ return SSL; }
+
+    void performSecureSetup() throws IOException
+    {
+	sc.write(wrap(clientOut));
+	while (res.getHandshakeStatus() != 
+	       SSLEngineResult.HandshakeStatus.FINISHED) {
+	    if (res.getHandshakeStatus() == 
+		SSLEngineResult.HandshakeStatus.NEED_UNWRAP) {
+		// unwrap
+		sTOc.clear();
+		while (sc.read(sTOc) < 1)
+		    try{ Thread.sleep(20); }catch(InterruptedException ie){}
+		sTOc.flip();
+		unwrap(sTOc);
+		if (res.getHandshakeStatus() != SSLEngineResult.HandshakeStatus.FINISHED) {
+		    clientOut.clear();
+		    sc.write(wrap(clientOut));
+		}
+	    } else if (res.getHandshakeStatus() == 
+		       SSLEngineResult.HandshakeStatus.NEED_WRAP) {
+		// wrap
+		clientOut.clear();
+		sc.write(wrap(clientOut));
+	    } else { try{ Thread.sleep(1000); }catch(InterruptedException ie){}}
+	}
+	clientIn.clear();
+	clientIn.flip();
+	SSL = 4;
     }
 	
     private synchronized ByteBuffer wrap(ByteBuffer b) throws SSLException {

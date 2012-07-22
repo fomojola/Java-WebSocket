@@ -261,16 +261,21 @@ public abstract class WebSocketClient extends WebSocketAdapter implements Runnab
 
 	private int getPort() {
 		int port = uri.getPort();
-		return port == -1 ? WebSocket.DEFAULT_PORT : port;
+		return port == -1 ? ("wss".equals(uri.getScheme()) ? WebSocket.DEFAULT_PORT_SECURE: WebSocket.DEFAULT_PORT) : port;
 	}
 
-	private void finishConnect() throws IOException , InvalidHandshakeException , InterruptedException {
+    private void finishConnect() throws IOException , InvalidHandshakeException , InterruptedException {
 		if( client.isConnectionPending() ) {
 			client.finishConnect();
 		}
 
 		// Now that we're connected, re-register for only 'READ' keys.
 		client.register( selector, SelectionKey.OP_READ );
+
+		// check and see if we're using SSL and haven't yet completed the SSLEngine handshaking (this is largely only an issue when using client mode: in server mode the connection is guaranteed to be open before we wrap it with the SSLSocketChannel, but in server mode it might not be so we need to wait till we get here)
+	if(conn.getChannel() != null && conn.getChannel().getState() == 1){
+	    conn.getChannel().performSecureSetup();
+	}
 
 		sendHandshake();
 	}

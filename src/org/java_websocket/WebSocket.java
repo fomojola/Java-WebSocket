@@ -31,6 +31,13 @@ public abstract class WebSocket {
 	public static final int DEFAULT_PORT = 80;
 
 	/**
+	 * The default secure port of WebSockets, as defined in the spec. If the nullary
+	 * constructor is used, DEFAULT_PORT_SECURE will be the port the WebSocketServer
+	 * is binded to. Note that ports under 1024 usually require root permissions.
+	 */
+	public static final int DEFAULT_PORT_SECURE = 443;
+
+	/**
 	 * sends the closing handshake.
 	 * may be send in response to an other handshake.
 	 */
