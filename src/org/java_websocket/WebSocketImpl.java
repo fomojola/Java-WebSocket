@@ -770,7 +770,7 @@ public final class WebSocketImpl extends WebSocket {
 		return super.toString(); // its nice to be able to set breakpoints here
 	}
 
-    SSLSocketChannel getChannel(){
+    SSLSocketChannel getSSLChannel(){
 	return sockchannel2;
     }
 }

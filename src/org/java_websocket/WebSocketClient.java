@@ -3,6 +3,7 @@ package org.java_websocket;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.NotYetConnectedException;
@@ -24,6 +25,9 @@ import org.java_websocket.framing.CloseFrame;
 import org.java_websocket.handshake.HandshakeImpl1Client;
 import org.java_websocket.handshake.Handshakedata;
 import org.java_websocket.handshake.ServerHandshake;
+
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 
 /**
  * The <tt>WebSocketClient</tt> is an abstract class that expects a valid
@@ -269,12 +273,23 @@ public abstract class WebSocketClient extends WebSocketAdapter implements Runnab
 			client.finishConnect();
 		}
 
+		/*
+		if("wss".equals(uri.getScheme())){
+		    SSLSocketFactory factory = (SSLSocketFactory)SSLSocketFactory.getDefault();
+		    InetSocketAddress remote = (InetSocketAddress)client.socket().getRemoteSocketAddress();
+		    Socket s = factory.createSocket(client.socket(), remote.getHostName(), remote.getPort(), true);
+		    System.err.println("---------->["+s+"]["+s.getChannel()+"]");
+		    client = s.getChannel();
+		    client.configureBlocking( false );
+		}
+		*/
+
 		// Now that we're connected, re-register for only 'READ' keys.
 		client.register( selector, SelectionKey.OP_READ );
-
+		
 		// check and see if we're using SSL and haven't yet completed the SSLEngine handshaking (this is largely only an issue when using client mode: in server mode the connection is guaranteed to be open before we wrap it with the SSLSocketChannel, but in server mode it might not be so we need to wait till we get here)
-	if(conn.getChannel() != null && conn.getChannel().getState() == 1){
-	    conn.getChannel().performSecureSetup();
+	if(conn.getSSLChannel() != null && conn.getSSLChannel().getState() == 1){
+	    conn.getSSLChannel().performSecureSetup();
 	}
 
 		sendHandshake();
